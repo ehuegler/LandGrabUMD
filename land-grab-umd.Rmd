@@ -1,0 +1,297 @@
+---
+title: "UMD's Land Grab History"
+author: "Ethan Huegler"
+date: "3/2/2021"
+output:
+  html_document:
+    code_folding: hide
+    theme: journal
+---
+
+# Land Grab Universities  
+[Land Grab Universities](https://www.landgrabu.org/#about) is a project by 
+*High Country News* to create a database of all of the indigenous land granted
+to American Universities through the Morrill Act. The Morrill Act sought out
+to make higher education accessible to a significantly wider range of people.
+It did so buy distributing land to State Universities to raise money for those
+schools (Alexander). What many people do not realize is that the land was not
+just for the campuses themselves. Western schools were allowed to claim land
+parcels within their state, while Eastern schools-who did not have such
+public land within the state where given parcels of land all over the country
+(Alexander).
+
+# The University of Maryland  
+
+Being one of the 52 Morrill Act schools, the University of Maryland was given
+parcels of land throughout the country. The Land Grab Universities database
+contains information about where and when that land was given, as well as
+the indigenous owners from which the land was bought or taken. Without
+seeing it on a map it can be very difficult to understand just how wide of
+an area was affected by the land grants. UMD has made an effort to respect
+the groups whos land was used to fund the University with through the land
+acknowledgment statement.
+
+#### Land Acknowledgment  
+> Every community owes its existence and strength to the generations before 
+them, around the world, who contributed their hopes, dreams, and energy into 
+making the history that led to this moment. Some were brought here against their
+will, some were drawn to migrate from their homes in hope of a better life, and 
+some have lived on this land for more generations than can be counted. Truth and
+acknowledgment are critical in building mutual respect and connections across 
+all barriers of heritage and difference.
+
+The Land Grab U database can be used to construct a map showing the parcels of 
+land which were given to UMD.The dates ranging from 1808 to 1865 show the date 
+on which that land was aquired by the federal government, whether through 
+purchase from native people of through secession.
+
+```{r init, warning=FALSE, message=FALSE}
+
+# Setup and Libraries
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, cache = TRUE)
+library(dplyr)
+library(rgdal)
+library(broom)
+library(ggplot2)
+library(gganimate)
+library(transformr)
+library(ggrepel)
+
+# Import Data
+path <- "https://raw.githubusercontent.com/HCN-Digital-Projects/landgrabu-data/master/Morrill_Act_of_1862_Indigenous_Land_Parcels_Database/CSVs/Cessions.csv"
+cessions <- read.csv(path)
+
+path <- "https://raw.githubusercontent.com/HCN-Digital-Projects/landgrabu-data/master/Morrill_Act_of_1862_Indigenous_Land_Parcels_Database/CSVs/Parcels.csv"
+parcels <- read.csv(path)
+
+path <- "https://raw.githubusercontent.com/HCN-Digital-Projects/landgrabu-data/master/Morrill_Act_of_1862_Indigenous_Land_Parcels_Database/CSVs/Universities.csv"
+universities <- read.csv(path)
+
+path <- "."
+parcel_shapes <- readOGR(dsn = path, layer = "Parcel_Polygons", verbose = FALSE)
+
+# Helper function for converting other data to lat/long coords
+rescale <- function(x, from, to) {
+  maxx <- max(x)
+  minx <- min(x)
+  out <- (to - from) * (x - minx)
+  out <- out / (maxx - minx)
+  out + from
+}
+
+# Create Map with Points
+plot_univ <- function(univ = "University of Maryland",
+                      abrv = "UMD",
+                      univ_color = "#CF102D",
+                      lat = 38.990267,
+                      long = -76.943949) {
+  univ_parcels <- filter(parcels, University == univ)
+  univ_parcel_shapes <-
+    parcel_shapes[parcel_shapes$MTRSA_LG %in% univ_parcels$MTRSA_LG, ]
+  univ_parcel_shapes_data <- tidy(univ_parcel_shapes)
+  locations <-
+    univ_parcel_shapes_data %>% group_by(id) %>% summarise(lat = mean(lat), long = mean(long))
+  
+  i <- 1
+  while (i <= nrow(locations)) {
+    locations[i, 4] <-
+      univ_parcel_shapes@data[which(univ_parcel_shapes@data[, 1] == (as.integer(locations[i, 1]) + 1)), 2]
+    locations[i, 5] <-
+      univ_parcels[which(univ_parcels[, 1] ==  as.character(locations[i, 4])), 15]
+    locations[i, 6] <-
+      univ_parcels[which(univ_parcels[, 1] ==  as.character(locations[i, 4])), 10]
+    locations[i, 7] <-
+      univ_parcels[which(univ_parcels[, 1] ==  as.character(locations[i, 4])), 4]
+    i <- i + 1
+  }
+  
+  colnames(locations) <-
+    c(colnames(locations)[1:3], "MTRSA_LG", "date", "tribe", "acres")
+  locations$date <- as.Date(locations$date, "%Y%m%d")
+  locations[is.na(locations)] <- as.Date("1864-01-01")
+  locations <- locations[order(locations$date), ]
+  locations[, "cummulative_acres"] <- cumsum(locations$acres)
+  
+  rexp <- "([^;:]*).*"
+  locations$tribe <- sub(rexp, "\\1", locations$tribe)
+  
+  acres_over_time <-
+    locations %>% group_by(date) %>% summarise(acres = as.integer(max(cummulative_acres)))
+  
+  us_states <- map_data("state")
+  
+  map <- ggplot() +
+    # Map of US
+    geom_polygon(
+      data = us_states,
+      aes(x = long, y = lat, group = group),
+      color = "black",
+      fill = "lightgrey"
+    ) +
+    # UMD dot
+    geom_point(
+      aes(y = lat, x = long),
+      fill = univ_color,
+      color = "black",
+      size = 5,
+      shape = 23
+    ) +
+    geom_label_repel(
+      data = data.frame(y = lat, x = long),
+      aes(x, y),
+      label = abrv,
+      seed = 10
+    ) +
+    # Locations
+    geom_point(
+      data = locations,
+      aes(
+        x = long,
+        y = lat,
+        group = id,
+        fill = factor(tribe)
+      ),
+      size = 4,
+      shape = 21,
+      color = "black"
+    ) +
+    # Acre Line
+    geom_line(
+      data = acres_over_time,
+      aes(
+        x = rescale(
+          as.integer(acres),
+          min(us_states$long),
+          max(us_states$long)
+        ),
+        y = min(us_states$lat) - 3
+      ),
+      color = univ_color,
+      size = 2
+    ) +
+    # Acre line point
+    geom_point(
+      data = acres_over_time,
+      aes(
+        x = rescale(
+          as.integer(acres),
+          min(us_states$long),
+          max(us_states$long)
+        ),
+        y = min(us_states$lat) - 3
+      ),
+      size = 4,
+      color = univ_color
+    ) +
+    #Acre labels
+    geom_label_repel(
+      data = acres_over_time,
+      aes(
+        x = rescale(
+          as.integer(acres),
+          min(us_states$long),
+          max(us_states$long)
+        ),
+        y = min(us_states$lat) - 3,
+        label = as.integer(acres),
+        group = 1
+      ),
+      max.overlaps = 20,
+      nudge_y = 1
+    ) +
+    # Style stuff
+    theme_void() +
+    theme(
+      legend.position = "bottom",
+      legend.key = element_blank(),
+      legend.key.size = unit(1, "point"),
+      legend.margin = margin(1, 1, 10, 1, "pt"),
+      axis.title.x.bottom = element_text()
+    ) +
+    guides(fill = guide_legend(override.aes = list(size = 4), ncol = 1, )) +
+    labs(
+      title = paste("  Locations of Land Aquired by the", univ),
+      fill = "Tribal Land Belonged to:",
+      x = "Total Acres Aquired by University of Maryland by {frame_along}\n\n"
+    )
+  
+  return(map)
+}
+
+# animate points to appear over time
+animate_plot <- function(p,
+                         w = 750,
+                         h = w,
+                         d = 40,
+                         ep = 20) {
+  animation0 <- animate(
+    plot = p + transition_reveal(as.Date(date)) + enter_fade(),
+    width = w,
+    height = h,
+    duration = d,
+    end_pause = ep,
+    renderer = gifski_renderer()
+  )
+  return(animation0)
+}
+
+# Display plot of UMD's land grab history.
+animate_plot(plot_univ())
+
+```
+
+In total UMD was granted 202,971 acres of indiginous land, or about 315 square
+miles of land, land that was not even in the state of Maryland. In comparison, 
+the College Park campus has a foot print of about 2 square miles. Adjusted for
+inflation, it cost the federal government $360,924 to acquire the land, and in
+the end it raised $1,866,138 for the University.
+
+# Other Universities  
+
+The other land grant institutions all have similar stories. They were granted
+significant amounts of land from across the country. Some schools, such as Penn
+State, were given over double what UMD recieved, and the map reflects just how
+many differnt indiginous geoups were affected.
+
+#### West Virginia University
+```{r wvu-plot}
+
+animate_plot(plot_univ(univ = "West Virginia University", abrv = "WVU", univ_color = "#EAAA00", lat = 39.648788, long = -79.971902))
+
+
+```
+
+#### Rutgers  
+```{r rutgers-plot}
+
+animate_plot(plot_univ(univ = "Rutgers, the State University", abrv = "Rutgers", univ_color = "#cc0033", lat = 40.521647, long = -74.446857))
+
+
+```
+
+#### University of Connecticut  
+```{r osu-plot}
+
+animate_plot(plot_univ(univ = "University of Connecticut", abrv = "UCONN", univ_color = "#7C878E", lat = 41.807497, long = -72.254335))
+
+
+```
+
+
+```{r}
+
+animate_plot(plot_univ(univ = "Pennsylvania State University", abrv = "PSU", univ_color = "#041E42", lat = 40.797641, long = -77.860413))
+
+```
+
+
+
+# Works Cited  
+Alexander, Dexter L. “Land-Grant Colleges and Popular Revolt: The Origins of the Morrill Act and the Reform of Higher Education.” *Journal of American History*, vol. 106, no. 4, Mar. 2020, pp. 1060–1061.  
+  
+Robert Lee, “Morrill Act of 1862 Indigenous Land Parcels Database,” *High Country News*, March 2020.  
+ 
+
+
+
+
