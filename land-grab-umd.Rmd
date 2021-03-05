@@ -314,7 +314,9 @@ animate_plot(plot_univ(univ = "Pennsylvania State University", abrv = "PSU", uni
 Alexander, Dexter L. “Land-Grant Colleges and Popular Revolt: The Origins of the Morrill Act and the Reform of Higher Education.” *Journal of American History*, vol. 106, no. 4, Mar. 2020, pp. 1060–1061.  
   
 Robert Lee, “Morrill Act of 1862 Indigenous Land Parcels Database,” *High Country News*, March 2020.  
- 
+  
+***
+The source code for this website can be found on [github](https://github.com/ehuegler/land-grab-umd).
 
 
 
