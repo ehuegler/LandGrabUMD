@@ -8,6 +8,36 @@ output:
     theme: journal
 ---
 
+```{r libraries, include=FASLE, cache=FALSE}
+# Setup and Libraries
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, cache = TRUE)
+library(dplyr)
+library(rgdal)
+library(broom)
+library(ggplot2)
+library(gganimate)
+library(transformr)
+library(ggrepel)
+```
+
+
+```{r grab-data, include=FALSE}
+# Import Data
+path <- "https://raw.githubusercontent.com/HCN-Digital-Projects/landgrabu-data/master/Morrill_Act_of_1862_Indigenous_Land_Parcels_Database/CSVs/Cessions.csv"
+cessions <- read.csv(path)
+
+path <- "https://raw.githubusercontent.com/HCN-Digital-Projects/landgrabu-data/master/Morrill_Act_of_1862_Indigenous_Land_Parcels_Database/CSVs/Parcels.csv"
+parcels <- read.csv(path)
+
+path <- "https://raw.githubusercontent.com/HCN-Digital-Projects/landgrabu-data/master/Morrill_Act_of_1862_Indigenous_Land_Parcels_Database/CSVs/Universities.csv"
+universities <- read.csv(path)
+
+path <- "."
+parcel_shapes <- readOGR(dsn = path, layer = "Parcel_Polygons", verbose = FALSE)
+
+```
+
+
 # Land Grab Universities  
 [Land Grab Universities](https://www.landgrabu.org/#about) is a project by 
 *High Country News* to create a database of all of the indigenous land granted
@@ -45,30 +75,7 @@ land which were given to UMD.The dates ranging from 1808 to 1865 show the date
 on which that land was aquired by the federal government, whether through 
 purchase from native people of through secession.
 
-```{r init, warning=FALSE, message=FALSE}
-
-# Setup and Libraries
-knitr::opts_chunk$set(warning = FALSE, message = FALSE, cache = TRUE)
-library(dplyr)
-library(rgdal)
-library(broom)
-library(ggplot2)
-library(gganimate)
-library(transformr)
-library(ggrepel)
-
-# Import Data
-path <- "https://raw.githubusercontent.com/HCN-Digital-Projects/landgrabu-data/master/Morrill_Act_of_1862_Indigenous_Land_Parcels_Database/CSVs/Cessions.csv"
-cessions <- read.csv(path)
-
-path <- "https://raw.githubusercontent.com/HCN-Digital-Projects/landgrabu-data/master/Morrill_Act_of_1862_Indigenous_Land_Parcels_Database/CSVs/Parcels.csv"
-parcels <- read.csv(path)
-
-path <- "https://raw.githubusercontent.com/HCN-Digital-Projects/landgrabu-data/master/Morrill_Act_of_1862_Indigenous_Land_Parcels_Database/CSVs/Universities.csv"
-universities <- read.csv(path)
-
-path <- "."
-parcel_shapes <- readOGR(dsn = path, layer = "Parcel_Polygons", verbose = FALSE)
+```{r functions, warning=FALSE, message=FALSE, cache=FALSE}
 
 # Helper function for converting other data to lat/long coords
 rescale <- function(x, from, to) {
@@ -235,10 +242,13 @@ animate_plot <- function(p,
   return(animation0)
 }
 
+```
+
+```{r umd-plot}
 # Display plot of UMD's land grab history.
 animate_plot(plot_univ())
-
 ```
+
 
 In total UMD was granted 202,971 acres of indiginous land, or about 315 square
 miles of land, land that was not even in the state of Maryland. In comparison, 
