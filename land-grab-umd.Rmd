@@ -6,11 +6,18 @@ output:
   html_document:
     code_folding: hide
     theme: journal
+knit: (
+  function(inputFile, encoding) { 
+    rmarkdown::render(inputFile, 
+                      encoding = encoding, 
+                      output_file = file.path(dirname(inputFile), 
+                                                      'index.html')) 
+  })
 ---
 
-```{r libraries, include=FASLE, cache=FALSE}
+```{r libraries, include=FALSE, cache=FALSE}
+
 # Setup and Libraries
-knitr::opts_chunk$set(warning = FALSE, message = FALSE, cache = TRUE)
 library(dplyr)
 library(rgdal)
 library(broom)
@@ -18,6 +25,13 @@ library(ggplot2)
 library(gganimate)
 library(transformr)
 library(ggrepel)
+library(formatR)
+
+# default chunk settings
+knitr::opts_chunk$set(warning = FALSE, 
+                      message = FALSE, 
+                      cache = TRUE, 
+                      tidy = TRUE)
 ```
 
 
@@ -32,7 +46,7 @@ parcels <- read.csv(path)
 path <- "https://raw.githubusercontent.com/HCN-Digital-Projects/landgrabu-data/master/Morrill_Act_of_1862_Indigenous_Land_Parcels_Database/CSVs/Universities.csv"
 universities <- read.csv(path)
 
-path <- "."
+path <- ".//parcel_polygons"
 parcel_shapes <- readOGR(dsn = path, layer = "Parcel_Polygons", verbose = FALSE)
 
 ```
