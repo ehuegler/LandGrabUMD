@@ -294,15 +294,15 @@ animate_plot(plot_univ(univ = "Rutgers, the State University", abrv = "Rutgers",
 ```
 
 #### University of Connecticut  
-```{r osu-plot}
+```{r uconn-plot}
 
 animate_plot(plot_univ(univ = "University of Connecticut", abrv = "UCONN", univ_color = "#7C878E", lat = 41.807497, long = -72.254335))
 
 
 ```
 
-
-```{r}
+#### Pennsylvania State University  
+```{r psu-plot}
 
 animate_plot(plot_univ(univ = "Pennsylvania State University", abrv = "PSU", univ_color = "#041E42", lat = 40.797641, long = -77.860413))
 
