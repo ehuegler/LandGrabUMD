@@ -15,7 +15,9 @@ knit: (
   })
 ---
 
-```{r libraries, include=FALSE, cache=FALSE}
+# Land Grab Universities 
+
+```{r libraries, cache=FALSE}
 
 # Setup and Libraries
 library(dplyr)
@@ -32,11 +34,8 @@ knitr::opts_chunk$set(warning = FALSE,
                       message = FALSE, 
                       cache = TRUE, 
                       tidy = TRUE)
-```
 
-
-```{r grab-data, include=FALSE}
-# Import Data
+# import all data
 path <- "https://raw.githubusercontent.com/HCN-Digital-Projects/landgrabu-data/master/Morrill_Act_of_1862_Indigenous_Land_Parcels_Database/CSVs/Cessions.csv"
 cessions <- read.csv(path)
 
@@ -48,11 +47,9 @@ universities <- read.csv(path)
 
 path <- ".//parcel_polygons"
 parcel_shapes <- readOGR(dsn = path, layer = "Parcel_Polygons", verbose = FALSE)
-
 ```
 
 
-# Land Grab Universities  
 [Land Grab Universities](https://www.landgrabu.org/#about) is a project by 
 *High Country News* to create a database of all of the indigenous land granted
 to American Universities through the Morrill Act. The Morrill Act sought out
@@ -89,7 +86,7 @@ land which were given to UMD.The dates ranging from 1808 to 1865 show the date
 on which that land was aquired by the federal government, whether through 
 purchase from native people of through secession.
 
-```{r functions, warning=FALSE, message=FALSE, cache=FALSE}
+```{r functions, cache=FALSE}
 
 # Helper function for converting other data to lat/long coords
 rescale <- function(x, from, to) {
