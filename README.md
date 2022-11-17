@@ -8,7 +8,7 @@ is an R markdown document which is configured to knit to
 [index.html](https://github.com/ehuegler/land-grab-umd/blob/main/index.html).
 The current version of 
 [index.html](https://github.com/ehuegler/land-grab-umd/blob/main/index.html)
-is utilized for the website [landgrabumd.ddns.net](landgrabumd.ddns.net).  
+is hosted on the web at https://ehuegler.github.io/LandGrabUMD/.  
   
 [parcel_polygons](https://github.com/ehuegler/land-grab-umd/tree/main/parcel_polygons) 
 is a directory containing the shapefiles from the Land Grab U database.  
